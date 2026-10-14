@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TaskFlow</title>
+<style>
+body{font:16px system-ui;margin:0;background:#f3f5fa;color:#18253b}main{max-width:1100px;margin:40px auto;padding:24px}h1{font-size:40px;margin:0}small{color:#5b687f}form{display:flex;gap:12px;margin:28px 0;flex-wrap:wrap}input,button{font:inherit;padding:12px;border:1px solid #c4cbda;border-radius:8px}button{background:#294dca;color:white;cursor:pointer}#board{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.column{background:#e7ebf4;padding:18px;border-radius:14px}.card{background:white;margin:14px 0;padding:18px;border-radius:10px;box-shadow:0 3px 12px #1928450d}.card h3{margin:0 0 10px;overflow-wrap:anywhere}.card button{padding:6px;margin:8px 4px 0 0;font-size:13px}.card p{overflow-wrap:anywhere}#message{min-height:24px;color:#a02e27}@media(max-width:700px){#board{grid-template-columns:1fr}}
+</style>
+<main><h1>TaskFlow</h1><small>Local work board · Java API · persisted tasks · version checks</small>
+<form id="create"><input name="title" placeholder="What needs doing?" maxlength="200" required aria-label="Task title"><input name="assignee" placeholder="Assignee" maxlength="100" required aria-label="Assignee"><button>Add task</button></form>
+<p id="message" role="status"></p><div id="board"></div><p><small>Demo only: assignee names are labels. No login, access control, cloud deployment, or AI integration.</small></p></main>
+<script>
+const states=['TODO','IN_PROGRESS','DONE'];
+async function post(path,fields){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields)});const data=await r.json();if(!r.ok)throw Error(data.error);return data}
+function element(tag,text){const el=document.createElement(tag);el.textContent=text;return el}
+async function act(fn){try{document.querySelector('#message').textContent='';await fn();await load()}catch(e){document.querySelector('#message').textContent=e.message;await load()}}
+async function load(){const response=await fetch('/api/tasks');if(!response.ok)throw Error('Unable to load tasks');const tasks=await response.json();const board=document.querySelector('#board');board.replaceChildren();for(const [i,state] of states.entries()){const column=element('section','');column.className='column';column.append(element('h2',state.replaceAll('_',' ')));for(const t of tasks.filter(t=>t.status===state)){const card=element('article','');card.className='card';card.append(element('h3',t.title),element('small',`${t.assignee} · v${t.version}`));for(const target of [i-1,i+1].filter(n=>n>=0&&n<3)){const b=element('button',`Move to ${states[target].replaceAll('_',' ')}`);b.onclick=()=>act(()=>post(`/api/tasks/${t.id}/move`,{version:t.version,status:states[target]}));card.append(b)}const comment=element('button','Comment');comment.onclick=()=>{const text=prompt('Comment (up to 500 characters)');if(text)act(()=>post(`/api/tasks/${t.id}/comments`,{version:t.version,text}))};card.append(comment);for(const text of t.comments)card.append(element('p',text));column.append(card)}board.append(column)}}
+document.querySelector('#create').onsubmit=e=>{e.preventDefault();const f=e.target;act(async()=>{await post('/api/tasks',Object.fromEntries(new FormData(f)));f.reset()})};load().catch(e=>document.querySelector('#message').textContent=e.message);
+</script></html>
