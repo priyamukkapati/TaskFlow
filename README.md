@@ -2,7 +2,9 @@
 
 ## Browser demo
 
-GitHub Pages deployment is configured in `.github/workflows/pages.yml`. Activation is pending: in Settings → Pages, select GitHub Actions as the build source, then rerun the Deploy TaskFlow demo workflow. The intended address is `https://priyamukkapati.github.io/TaskFlow/`.
+**[Open the live demo →](https://priyamukkapati.github.io/TaskFlow/)**
+
+Hosted on GitHub Pages. Changes to `demo/` deploy automatically through `.github/workflows/pages.yml`.
 
 The hosted demo supports task creation, adjacent-column moves, comments, search, and browser-local persistence. It is a separate browser edition in `demo/`, with sample data for each visitor. It does not run the Java backend or demonstrate server-side concurrency. Serve `demo/` with any static HTTP server to run this edition locally.
 
